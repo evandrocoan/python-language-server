@@ -100,3 +100,4 @@ ENV/
 
 # Merge orig files
 *.orig
+*.sublime-workspace
