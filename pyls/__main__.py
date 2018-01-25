@@ -104,12 +104,6 @@ def _configure_logger(args):
         log_handler.setFormatter(formatter)
         root_logger.addHandler(log_handler)
 
-    # CRITICAL = 50
-    # FATAL = CRITICAL
-    # ERROR = 40
-    # WARNING = 30
-    # INFO = 20
-    # DEBUG = 10
     if args.verbose == 0:
         level = logging.WARNING
     elif args.verbose == 1:
