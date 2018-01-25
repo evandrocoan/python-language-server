@@ -50,7 +50,7 @@ def main():
     parser = argparse.ArgumentParser()
     add_arguments(parser)
     args = parser.parse_args()
-    configure_logger(args)
+    _configure_logger(args)
 
     if args.tcp:
         language_server.start_tcp_lang_server(args.host, args.port, PythonLanguageServer)
@@ -84,7 +84,7 @@ def _binary_stdio():
 
     return stdin, stdout
 
-def configure_logger(args):
+def _configure_logger(args):
     log_config = args.log_config
     root_logger = logging.root
 
@@ -93,10 +93,12 @@ def configure_logger(args):
             logging.config.dictConfig(json.load(f))
     else:
         log_file = args.log_file
-        formatter = logging.Formatter(LOG_FORMAT, style="%")
+        formatter = logging.Formatter(LOG_FORMAT)
         if log_file:
-            log_handler = logging.handlers.RotatingFileHandler(log_file, mode='a',
-                    maxBytes=50*1024*1024, backupCount=10, encoding=None, delay=0)
+            log_handler = logging.handlers.RotatingFileHandler(
+                log_file, mode='a', maxBytes=50*1024*1024,
+                backupCount=10, encoding=None, delay=0
+            )
         else:
             log_handler = logging.StreamHandler()
         log_handler.setFormatter(formatter)
