@@ -40,6 +40,7 @@ setup(
         'pycodestyle',
         'pydocstyle',
         'pyflakes',
+        'debug_tools',
         'rope>=0.10.5',
         'yapf',
         'pluggy'
