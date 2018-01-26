@@ -22,7 +22,7 @@ class ConfigSource(object):
 
     def __str__(self):
         representation = [
-            "%s Object, root_path: %s" % (self.__class__.__name__, str(self.root_path)),
+            "%s. root_path: %s" % (self.__class__.__name__, str(self.root_path)),
             "is_windows: %s" % str(self.is_windows),
             "xdg_home: %s" % str(self.xdg_home),
             "_modified_times: %s" % str(self._modified_times),

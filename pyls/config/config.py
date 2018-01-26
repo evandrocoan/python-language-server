@@ -43,7 +43,7 @@ class Config(object):
 
     def __str__(self):
         representation = [
-            "%s Object, _root_path: %s" % (self.__class__.__name__, str(self._root_path)),
+            "%s. _root_path: %s" % (self.__class__.__name__, str(self._root_path)),
             "_root_uri: %s" % str(self._root_uri),
             "_init_opts: %s" % str(self._init_opts),
             "_settings: %s" % str(self._settings),
