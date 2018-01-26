@@ -38,7 +38,7 @@ setup(
         'json-rpc',
         'mccabe',
         'pycodestyle',
-        'pydocstyle',
+        'pydocstyle>=2.0.0',
         'pyflakes',
         'debug_tools',
         'rope>=0.10.5',
