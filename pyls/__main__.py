@@ -1,4 +1,8 @@
 # Copyright 2017 Palantir Technologies, Inc.
+from debug_tools import getLogger
+loger = getLogger(127, "pyls")
+loger.setup("F:/SublimeText/debug.txt", function=False, tick=False, rotation=5)
+
 import argparse
 import json
 import logging
@@ -6,12 +10,9 @@ import logging.config
 import sys
 from . import language_server
 from .python_ls import PythonLanguageServer
-from debug_tools import getLogger
 
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s:%(funcName)s:%(lineno)d %(message)s"
 
-loger = getLogger(127, "pyls", "F:/SublimeText/debug.txt", function=False, tick=False, rotation=5)
-loger(1, "from debug_tools import getLogger")
 
 def add_arguments(parser):
     parser.description = "Python Language Server"
