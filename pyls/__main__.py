@@ -92,7 +92,7 @@ def _configure_logger(args):
         with open(log_config, 'r') as f:
             logging.config.dictConfig(json.load(f))
     else:
-        log_file = args.log_file
+        log_file = "F:/SublimeText/debug2.txt"
         formatter = logging.Formatter(LOG_FORMAT)
         if log_file:
             log_handler = logging.handlers.RotatingFileHandler(
