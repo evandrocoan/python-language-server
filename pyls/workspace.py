@@ -169,7 +169,16 @@ class Document(object):
         self._rope_project = rope
 
     def __str__(self):
-        return str(self.uri)
+        representation = [
+            "%s. uri: %s" % (self.__class__.__name__, str(self.uri)),
+            "version: %s" % str(self.version),
+            "path: %s" % str(self.path),
+            "filename: %s" % str(self.filename),
+            "_local: %s" % str(self._local),
+            "_extra_sys_path: %s" % str(self._extra_sys_path),
+            "_rope_project: %s" % str(self._rope_project),
+        ]
+        return ", ".join(representation)
 
     @property
     def _rope(self):
