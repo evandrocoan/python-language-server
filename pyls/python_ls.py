@@ -45,6 +45,7 @@ class PythonLanguageServer(LanguageServer):
     def _hook(self, hook_name, doc_uri=None, **kwargs):
         doc = self.workspace.get_document(doc_uri) if doc_uri else None
         hook = self.config.plugin_manager.subset_hook_caller(hook_name, self.config.disabled_plugins)
+        log.debug("PythonLanguageServer, self.config: %s", self.config)
         return hook(config=self.config, workspace=self.workspace, document=doc, **kwargs)
 
     def capabilities(self):
