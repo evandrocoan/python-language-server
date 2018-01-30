@@ -6,16 +6,12 @@ import logging
 import logging.config
 import sys
 
-from debug_tools import getLogger
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 
 from . import language_server
 from .python_ls import PythonLanguageServer
 
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s:%(funcName)s:%(lineno)d %(message)s"
-
-loger = getLogger(127, "pyls")
-loger.setup("F:/SublimeText/debug.txt", function=False, tick=False, rotation=5)
 
 
 def add_arguments(parser):
