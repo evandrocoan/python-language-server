@@ -82,10 +82,10 @@ class Workspace(object):
         self._docs = {}
 
         # Whilst incubating, keep private
-        if self._lang_server.config.plugin_settings('rope').get('create_folder', False):
-            self.__rope = Project(self._root_path)
-        else:
-            self.__rope = Project(self._root_path, ropefolder=None)
+        # if self._rpc_manager.config.plugin_settings('rope').get('create_folder', False):
+        #     self.__rope = Project(self._root_path)
+        # else:
+        self.__rope = Project(self._root_path, ropefolder=None)
         self.__rope.prefs.set('extension_modules', self.PRELOADED_MODULES)
 
     def __str__(self):
@@ -93,7 +93,7 @@ class Workspace(object):
             "%s. _root_path: %s" % (self.__class__.__name__, str(self._root_path)),
             "_root_uri: %s" % str(self._root_uri),
             "_root_uri_scheme: %s" % str(self._root_uri_scheme),
-            "_lang_server: %s" % str(self._lang_server),
+            "_rpc_manager: %s" % str(self._rpc_manager),
             "__rope: %s" % str(self.__rope),
         ]
         representation.extend(["_docs(%s): %s" % (item, self._docs[item])
