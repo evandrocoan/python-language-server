@@ -36,6 +36,7 @@ setup(
         'concurrent-log-handler',
         'pypiwin32',
         'future>=0.14.0',
+        'futures; python_version == "2.7"',
         'jedi>=0.10',
         'json-rpc',
         'mccabe',
@@ -53,7 +54,7 @@ setup(
     # for example:
     # $ pip install -e .[test]
     extras_require={
-        'test': ['tox', 'versioneer', 'pytest', 'pytest-cov', 'coverage'],
+        'test': ['tox', 'versioneer', 'pytest', 'mock', 'pytest-cov', 'coverage'],
     },
 
     # To provide executable scripts, use entry points in preference to the
