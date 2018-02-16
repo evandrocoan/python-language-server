@@ -26,6 +26,17 @@ class JSONRPCManager(object):
         self._received_requests = {}
         self._executor_service = ThreadPoolExecutor()
 
+    def __str__(self):
+        representation = [
+            "%s. _message_manager: %s" % (self.__class__.__name__, str(self._message_manager)),
+            "_message_handler: %s" % str(self._message_handler),
+            "_shutdown: %s" % str(self._shutdown),
+            "_sent_requests: %s" % str(self._sent_requests),
+            "_received_requests: %s" % str(self._received_requests),
+            "_executor_service: %s" % str(self._executor_service),
+        ]
+        return ", ".join(representation)
+
     def start(self):
         """Start reading JSONRPC messages off of rx"""
         self.consume_requests()

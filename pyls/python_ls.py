@@ -72,6 +72,14 @@ class PythonLanguageServer(object):
         self.config = None
         self._dispatchers = []
 
+    def __str__(self):
+        representation = [
+            "%s. config: %s" % (self.__class__.__name__, str(self.config)),
+            "_dispatchers: %s" % str(self._dispatchers),
+            "rpc_manager: %s" % str(self.rpc_manager),
+        ]
+        return ", ".join(representation)
+
     def start(self):
         """Entry point for the server"""
         self.rpc_manager.start()
@@ -98,13 +106,6 @@ class PythonLanguageServer(object):
                 if method_call in dispatcher:
                     return dispatcher[method_call](**params)
         raise KeyError('Handler for method {} not found'.format(method))
-
-    def __str__(self):
-        representation = [
-            "%s. config: %s" % (self.__class__.__name__, str(self.config)),
-            "_dispatchers: %s" % str(self._dispatchers),
-        ]
-        return ", ".join(representation)
 
     def _hook(self, hook_name, doc_uri=None, **kwargs):
         """Calls hook_name and returns a list of results from all registered handlers"""
