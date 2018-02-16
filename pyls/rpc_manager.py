@@ -1,6 +1,6 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import logging
-from uuid import uuid1
+from uuid import uuid4
 
 from concurrent.futures import ThreadPoolExecutor, Future
 from jsonrpc.base import JSONRPCBaseResponse
@@ -24,7 +24,7 @@ class JSONRPCManager(object):
         self._shutdown = False
         self._sent_requests = {}
         self._received_requests = {}
-        self._executor_service = ThreadPoolExecutor()
+        self._executor_service = ThreadPoolExecutor(max_workers=5)
 
     def __str__(self):
         representation = [
@@ -62,10 +62,10 @@ class JSONRPCManager(object):
 
         """
         log.debug('Calling %s %s', method, params)
-        request = JSONRPC20Request(_id=uuid1().int, method=method, params=params)
+        request = JSONRPC20Request(_id=uuid4().int, method=method, params=params)
         request_future = Future()
         self._sent_requests[request._id] = request_future
-        self._message_manager.write_message(request.data)
+        self._message_manager.write_message(request)
         return request_future
 
     def notify(self, method, params=None):
@@ -77,7 +77,7 @@ class JSONRPCManager(object):
          """
         log.debug('Notify %s %s', method, params)
         notification = JSONRPC20Request(method=method, params=params)
-        self._message_manager.write_message(notification.data)
+        self._message_manager.write_message(notification)
 
     def cancel(self, request_id):
         """Cancel pending request handler.
@@ -120,8 +120,7 @@ class JSONRPCManager(object):
             maybe_handler = self._message_handler(request.method, params)
         except KeyError:
             log.debug("No handler found for %s", request.method)
-            self._message_manager.write_message(
-                JSONRPC20Response(_id=request._id, error=JSONRPCMethodNotFound()._data).data)
+            self._message_manager.write_message(JSONRPC20Response(_id=request._id, error=JSONRPCMethodNotFound()._data))
             return
 
         if request._id in self._received_requests:
@@ -130,8 +129,7 @@ class JSONRPCManager(object):
             self._handle_async_request(request, maybe_handler)
         elif not request.is_notification:
             log.debug('Sync request %s', request._id)
-            response = _make_response(request, result=maybe_handler)
-            self._message_manager.write_message(response.data)
+            self._message_manager.write_message(_make_response(request, result=maybe_handler))
 
     def _handle_async_request(self, request, handler):
         log.debug('Async request %s', request._id)
@@ -146,14 +144,14 @@ class JSONRPCManager(object):
                 log.debug('Cleared cancelled request %d', request._id)
                 return
 
-            error, trace = completed_future.exception_info()
+            error = completed_future.exception()
             if error is not None:
-                log.error('Failed to handle request %s with error %s %s', request._id, error, trace)
+                log.error('Failed to handle request %s with error %s', request._id, error)
                 # TODO(forozco): add more descriptive error
                 response = _make_response(request, error=JSONRPCInternalError()._data)
             else:
                 response = _make_response(request, result=completed_future.result())
-            self._message_manager.write_message(response.data)
+            self._message_manager.write_message(response)
         self._received_requests[request._id] = future
         future.add_done_callback(did_finish_callback)
 
