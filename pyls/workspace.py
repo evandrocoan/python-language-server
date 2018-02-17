@@ -1,6 +1,6 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import io
-import logging
+import debug_tools
 import os
 import re
 import sys
@@ -13,7 +13,7 @@ from rope.base.project import Project
 
 from . import lsp, uris, _utils
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 # TODO: this is not the best e.g. we capture numbers
 RE_START_WORD = re.compile('[A-Za-z_0-9]*$')

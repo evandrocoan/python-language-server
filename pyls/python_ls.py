@@ -1,5 +1,5 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 import socketserver
 import re
 
@@ -9,7 +9,7 @@ from .json_rpc_server import JSONRPCServer
 from .rpc_manager import JSONRPCManager
 from .workspace import Workspace
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 _RE_FIRST_CAP = re.compile('(.)([A-Z][a-z]+)')
 _RE_ALL_CAP = re.compile('([a-z0-9])([A-Z])')

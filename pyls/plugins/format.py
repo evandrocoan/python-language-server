@@ -1,11 +1,11 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 import os
 from yapf.yapflib import file_resources
 from yapf.yapflib.yapf_api import FormatCode
 from pyls import hookimpl
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 
 @hookimpl

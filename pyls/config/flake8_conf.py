@@ -1,10 +1,10 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 import os
 from pyls._utils import find_parents
 from .source import ConfigSource
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 CONFIG_KEY = 'flake8'
 PROJECT_CONFIGS = ['.flake8', 'setup.cfg', 'tox.ini']

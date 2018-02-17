@@ -1,10 +1,10 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import ast
-import logging
+import debug_tools
 import mccabe
 from pyls import hookimpl, lsp
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 THRESHOLD = 'threshold'
 DEFAULT_THRESHOLD = 15

@@ -1,5 +1,5 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 from uuid import uuid4
 
 from concurrent.futures import ThreadPoolExecutor, Future
@@ -8,7 +8,7 @@ from jsonrpc.jsonrpc1 import JSONRPC10Response
 from jsonrpc.jsonrpc2 import JSONRPC20Response, JSONRPC20Request
 from jsonrpc.exceptions import JSONRPCMethodNotFound, JSONRPCInternalError
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 RESPONSE_CLASS_MAP = {
     "1.0": JSONRPC10Response,

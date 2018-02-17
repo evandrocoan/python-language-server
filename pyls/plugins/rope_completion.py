@@ -1,11 +1,11 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 from rope.contrib.codeassist import code_assist, sorted_proposals
 
 from pyls import hookimpl, lsp
 
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 
 @hookimpl

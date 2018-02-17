@@ -3,15 +3,11 @@
 import argparse
 import json
 import logging
-import logging.config
 import sys
 
-from concurrent_log_handler import ConcurrentRotatingFileHandler
+from debug_tools import getLogger
 
 from .python_ls import start_io_lang_server, start_tcp_lang_server, PythonLanguageServer
-
-
-LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s:%(funcName)s:%(lineno)d %(message)s"
 
 
 def add_arguments(parser):
@@ -86,28 +82,20 @@ def _binary_stdio():
 
 
 def _configure_logger(verbose=0, log_config=None, log_file=None):
-    root_logger = logging.root
 
     if log_config:
         with open(log_config, 'r') as f:
+            logging.Logger.manager = debug_tools.Debugger.manager
+            logging.Logger.manager.setLoggerClass( Debugger )
             logging.config.dictConfig(json.load(f))
     else:
-        formatter = logging.Formatter(LOG_FORMAT)
-        if log_file:
-            log_handler = ConcurrentRotatingFileHandler(
-                log_file, mode='a', maxBytes=50*1024*1024,
-                backupCount=10, encoding=None, delay=0
-            )
-        else:
-            log_handler = logging.StreamHandler()
-        log_handler.setFormatter(formatter)
-        root_logger.addHandler(log_handler)
+        log = getLogger(1, "pyls", file=log_file, mode=10, rotation=50, level=True)
 
-    if verbose == 0:
-        level = logging.WARNING
-    elif verbose == 1:
-        level = logging.INFO
-    elif verbose >= 2:
-        level = logging.DEBUG
+        if verbose == 0:
+            level = "WARNING"
+        elif verbose == 1:
+            level = "INFO"
+        elif verbose >= 2:
+            level = "DEBUG"
 
-    root_logger.setLevel(level)
+        log.setLevel(level)

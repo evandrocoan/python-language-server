@@ -1,10 +1,10 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import configparser
-import logging
+import debug_tools
 import os
 import sys
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 
 class ConfigSource(object):

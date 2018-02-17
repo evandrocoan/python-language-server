@@ -1,6 +1,6 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import json
-import logging
+import debug_tools
 import threading
 
 from jsonrpc.jsonrpc2 import JSONRPC20Response, JSONRPC20BatchRequest, JSONRPC20BatchResponse
@@ -10,7 +10,7 @@ from jsonrpc.exceptions import (
 )
 
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 
 class JSONRPCServer(object):

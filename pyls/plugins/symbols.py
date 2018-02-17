@@ -1,9 +1,9 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 from pyls import hookimpl
 from pyls.lsp import SymbolKind
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 
 @hookimpl

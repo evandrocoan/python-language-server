@@ -1,11 +1,11 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import functools
-import logging
+import debug_tools
 import os
 import re
 import threading
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
 ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')

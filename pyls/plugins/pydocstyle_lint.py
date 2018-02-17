@@ -1,16 +1,16 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import contextlib
-import logging
+import debug_tools
 import sys
 
 import pydocstyle
 from pyls import hookimpl, lsp
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 # PyDocstyle is a little verbose in debug message
-pydocstyle_logger = logging.getLogger(pydocstyle.utils.__name__)
-pydocstyle_logger.setLevel(logging.INFO)
+pydocstyle_logger = debug_tools.getLogger(pydocstyle.utils.__name__)
+pydocstyle_logger.setLevel("INFO")
 
 
 @hookimpl

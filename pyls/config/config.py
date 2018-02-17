@@ -1,5 +1,5 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 import pluggy
 
 from pyls import _utils, hookspecs, uris, PYLS
@@ -7,7 +7,7 @@ from .flake8_conf import Flake8Config
 from .pycodestyle_conf import PyCodeStyleConfig
 
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 # Sources of config, first source overrides next source
 DEFAULT_CONFIG_SOURCES = ['pycodestyle']

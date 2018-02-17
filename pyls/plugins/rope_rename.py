@@ -1,5 +1,5 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 import os
 import sys
 
@@ -8,7 +8,7 @@ from rope.refactor.rename import Rename
 
 from pyls import hookimpl, uris
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 
 @hookimpl

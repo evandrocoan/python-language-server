@@ -1,9 +1,9 @@
 # Copyright 2017 Palantir Technologies, Inc.
-import logging
+import debug_tools
 import re
 from pyls import hookimpl, _utils
 
-log = logging.getLogger(__name__)
+log = debug_tools.getLogger(__name__)
 
 SPHINX = re.compile(r"\s*:param\s+(?P<param>\w+):\s*(?P<doc>[^\n]+)")
 EPYDOC = re.compile(r"\s*@param\s+(?P<param>\w+):\s*(?P<doc>[^\n]+)")
