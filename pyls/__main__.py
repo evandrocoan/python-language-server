@@ -3,9 +3,8 @@
 import argparse
 import json
 import logging
+import debug_tools
 import sys
-
-from debug_tools import getLogger
 
 from .python_ls import start_io_lang_server, start_tcp_lang_server, PythonLanguageServer
 
@@ -86,10 +85,11 @@ def _configure_logger(verbose=0, log_config=None, log_file=None):
     if log_config:
         with open(log_config, 'r') as f:
             logging.Logger.manager = debug_tools.Debugger.manager
-            logging.Logger.manager.setLoggerClass( Debugger )
+            logging.Logger.manager.setLoggerClass( debug_tools.Debugger )
+
             logging.config.dictConfig(json.load(f))
     else:
-        log = getLogger(1, "pyls", file=log_file, mode=10, rotation=50, level=True)
+        log = debug_tools.getLogger(1, "pyls", file=log_file, mode=10, rotation=50, level=True)
 
         if verbose == 0:
             level = "WARNING"
