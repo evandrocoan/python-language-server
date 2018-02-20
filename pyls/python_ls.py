@@ -6,10 +6,13 @@ import re
 from . import lsp, _utils, uris
 from .config import config
 from .json_rpc_server import JSONRPCServer
-from .rpc_manager import JSONRPCManager
+from .rpc_manager import JSONRPCManager, MissingMethodException
 from .workspace import Workspace
 
 log = debug_tools.getLogger(__name__)
+
+_RE_FIRST_CAP = re.compile('(.)([A-Z][a-z]+)')
+_RE_ALL_CAP = re.compile('([a-z0-9])([A-Z])')
 
 _RE_FIRST_CAP = re.compile('(.)([A-Z][a-z]+)')
 _RE_ALL_CAP = re.compile('([a-z0-9])([A-Z])')
@@ -106,7 +109,17 @@ class PythonLanguageServer(object):
                 if method_call in dispatcher:
                     return dispatcher[method_call](**params)
 
-        raise KeyError('Handler for method {} not found'.format(method))
+        raise MissingMethodException('No handler for for method {}'.format(method))
+
+    def m__cancel_request(self, **kwargs):
+        self.rpc_manager.cancel(kwargs['id'])
+
+    def m_shutdown(self, **_kwargs):
+        self.rpc_manager.shutdown()
+        return None
+
+    def m_exit(self, **_kwargs):
+        self.rpc_manager.exit()
 
     def _hook(self, hook_name, doc_uri=None, **kwargs):
         """Calls hook_name and returns a list of results from all registered handlers"""
@@ -150,24 +163,12 @@ class PythonLanguageServer(object):
             rootUri = uris.from_fs_path(rootPath) if rootPath is not None else ''
 
         self.config = config.Config(rootUri, initializationOptions or {})
-        self.workspace = Workspace(rootUri, rpc_manager=self.rpc_manager)
+        self.workspace = Workspace(rootUri, self.rpc_manager)
         self._dispatchers = self._hook('pyls_dispatchers')
         self._hook('pyls_initialize')
 
         # Get our capabilities
         return {'capabilities': self.capabilities()}
-
-    def m__cancel_request(self, **kwargs):
-        def handler():
-            self.rpc_manager.cancel(kwargs['id'])
-        return handler
-
-    def m_shutdown(self, **_kwargs):
-        self.rpc_manager.shutdown()
-        return None
-
-    def m_exit(self, **_kwargs):
-        self.rpc_manager.exit()
 
     def code_actions(self, doc_uri, range, context):
         return flatten(self._hook('pyls_code_actions', doc_uri, range=range, context=context))
