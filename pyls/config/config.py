@@ -20,7 +20,6 @@ class Config(object):
         self._root_uri = root_uri
         self._init_opts = init_opts
 
-        self._disabled_plugins = []
         self._settings = {}
         self._plugin_settings = {}
 
@@ -41,6 +40,8 @@ class Config(object):
         for plugin_conf in self._pm.hook.pyls_settings(config=self):
             self._plugin_settings = _utils.merge_dicts(self._plugin_settings, plugin_conf)
 
+        self._update_disabled_plugins()
+
     def __str__(self):
         representation = [
             "%s. _root_path: %s" % (self.__class__.__name__, str(self._root_path)),
@@ -48,7 +49,7 @@ class Config(object):
             "_init_opts: %s" % str(self._init_opts),
             "_settings: %s" % str(self._settings),
             "_plugin_settings: %s" % str(self._plugin_settings),
-            "_disabled_plugins: %s" % str(self._disabled_plugins),
+            "self.settings(): %s" % str(self.settings()),
         ]
         representation.extend(["_config_sources(%s): %s" % (item, self._config_sources[item])
                                for item in self._config_sources])
@@ -77,6 +78,8 @@ class Config(object):
             2. Plugin settings, reported by PyLS plugins
             3. LSP settings, given to us from didChangeConfiguration
             4. Project settings, found in config files in the current project.
+
+        TODO(gatesn): We should update a cached view of this whenever any configs change
         """
         settings = {}
         sources = self._settings.get('configurationSources', DEFAULT_CONFIG_SOURCES)
@@ -114,10 +117,12 @@ class Config(object):
         """Recursively merge the given settings into the current settings."""
         self._settings = settings
         log.info("Updated settings to %s", self._settings)
+        self._update_disabled_plugins()
 
+    def _update_disabled_plugins(self):
         # All plugins default to enabled
         self._disabled_plugins = [
             plugin for name, plugin in self.plugin_manager.list_name_plugin()
-            if not self._settings.get('plugins', {}).get(name, {}).get('enabled', True)
+            if not self.settings().get('plugins', {}).get(name, {}).get('enabled', True)
         ]
         log.info("Disabled plugins: %s", self._disabled_plugins)

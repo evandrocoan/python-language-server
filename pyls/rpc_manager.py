@@ -65,7 +65,7 @@ class JSONRPCManager(object):
             Future that will resolve once a response has been received
         """
         log.debug('Calling %s %s', method, params)
-        request = JSONRPC20Request(_id=uuid4().int, method=method, params=params)
+        request = JSONRPC20Request(_id=str(uuid4()), method=method, params=params)
         request_future = Future()
         self._sent_requests[request._id] = request_future
         self._message_manager.write_message(request)
@@ -128,7 +128,7 @@ class JSONRPCManager(object):
         except JSONRPCDispatchException as e:
             output = _make_response(request, error=e.error._data)
         except Exception as e:  # pylint: disable=broad-except
-            log.exception('synchronous method handler exception')
+            log.exception('synchronous method handler exception for request: %s', request)
             output = _make_response(request, error=JSONRPCServerError()._data)
         else:
             if request._id in self._received_requests:
@@ -161,7 +161,7 @@ class JSONRPCManager(object):
                     output = _make_response(request, error=e.error._data)
                 except Exception as e:  # pylint: disable=broad-except
                     # TODO(forozco): add more descriptive error
-                    log.exception('asynchronous method handler exception')
+                    log.exception('asynchronous method handler exception for request: %s', request)
                     output = _make_response(request, error=JSONRPCServerError()._data)
                 else:
                     output = _make_response(request, result=result)
