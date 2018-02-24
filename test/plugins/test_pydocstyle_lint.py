@@ -13,9 +13,9 @@ import json
 """
 
 
-def test_pydocstyle():
+def test_pydocstyle(config):
     doc = Document(DOC_URI, DOC)
-    diags = pydocstyle_lint.pyls_lint(doc)
+    diags = pydocstyle_lint.pyls_lint(config, doc)
 
     assert all([d['source'] == 'pydocstyle' for d in diags])
 

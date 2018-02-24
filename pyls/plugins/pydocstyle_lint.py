@@ -20,8 +20,10 @@ def pyls_settings():
 
 
 @hookimpl
-def pyls_lint(document):
+def pyls_lint(config, document):
     conf = pydocstyle.config.ConfigurationParser()
+    settings = config.plugin_settings('pydocstyle')
+    settings_codes = settings.get('select', []) + settings.get('ignore', [])
 
     with _patch_sys_argv([document.path]):
         # TODO(gatesn): We can add more pydocstyle args here from our pyls config
@@ -33,6 +35,8 @@ def pyls_lint(document):
         errors = pydocstyle.checker.ConventionChecker().check_source(
             document.source, filename, ignore_decorators=ignore_decorators
         )
+        checked_codes = list(set(checked_codes) - set(settings_codes))
+        log.debug( "checked_codes: %s", checked_codes )
 
         try:
             for error in errors:
