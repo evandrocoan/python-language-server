@@ -3,8 +3,6 @@ import debug_tools
 import socketserver
 import re
 
-from logging import DEBUG
-
 from . import lsp, _utils, uris
 from .config import config
 from .json_rpc_server import JSONRPCServer
@@ -127,9 +125,7 @@ class PythonLanguageServer(object):
         """Calls hook_name and returns a list of results from all registered handlers"""
         doc = self.workspace.get_document(doc_uri) if doc_uri else None
         hook_handlers = self.config.plugin_manager.subset_hook_caller(hook_name, self.config.disabled_plugins)
-        if log.isEnabledFor(DEBUG):
-            create_string = str( self.config )
-            log.debug("PythonLanguageServer, self.config: %s", create_string)
+        log.debug("PythonLanguageServer, self.config: %s", self.config)
         return hook_handlers(config=self.config, workspace=self.workspace, document=doc, **kwargs)
 
     def capabilities(self):
