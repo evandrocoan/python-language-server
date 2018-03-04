@@ -87,22 +87,22 @@ class Config(object):
         for source_name in reversed(sources):
             source = self._config_sources[source_name]
             source_conf = source.user_config()
-            log.debug("Got user config from %s: %s", source.__class__.__name__, source_conf)
+            # log.debug("Got user config from %s: %s", source.__class__.__name__, source_conf)
             settings = _utils.merge_dicts(settings, source_conf)
-        log.debug("With user configuration: %s", settings)
+        # log.debug("With user configuration: %s", settings)
 
         settings = _utils.merge_dicts(settings, self._plugin_settings)
-        log.debug("With plugin configuration: %s", settings)
+        # log.debug("With plugin configuration: %s", settings)
 
         settings = _utils.merge_dicts(settings, self._settings)
-        log.debug("With lsp configuration: %s", settings)
+        # log.debug("With lsp configuration: %s", settings)
 
         for source_name in reversed(sources):
             source = self._config_sources[source_name]
             source_conf = source.project_config(document_path or self._root_path)
-            log.debug("Got project config from %s: %s", source.__class__.__name__, source_conf)
+            # log.debug("Got project config from %s: %s", source.__class__.__name__, source_conf)
             settings = _utils.merge_dicts(settings, source_conf)
-        log.debug("With project configuration: %s", settings)
+        # log.debug("With project configuration: %s", settings)
 
         return settings
 

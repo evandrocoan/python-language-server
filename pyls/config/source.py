@@ -49,7 +49,7 @@ class ConfigSource(object):
         modified = tuple([os.path.getmtime(f) for f in files])
 
         if files in self._modified_times and modified == self._modified_times[files]:
-            log.debug("Using cached configuration for %s", files)
+            # log.debug("Using cached configuration for %s", files)
             return self._configs_cache[files]
 
         config = configparser.RawConfigParser()
