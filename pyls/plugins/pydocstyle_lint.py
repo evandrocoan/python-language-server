@@ -9,7 +9,7 @@ from pyls import hookimpl, lsp
 log = debug_tools.getLogger(__name__)
 
 # PyDocstyle is a little verbose in debug message
-pydocstyle_logger = debug_tools.getLogger(pydocstyle.utils.__name__)
+pydocstyle_logger = debug_tools.getLogger("pyls." + pydocstyle.utils.__name__)
 pydocstyle_logger.setLevel("INFO")
 
 
