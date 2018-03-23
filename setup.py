@@ -33,8 +33,6 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
         'configparser',
-        'concurrent-log-handler',
-        'pypiwin32',
         'future>=0.14.0',
         'futures; python_version<"3.2"',
         'jedi>=0.10',
@@ -42,8 +40,7 @@ setup(
         'mccabe',
         'pycodestyle',
         'pydocstyle>=2.0.0',
-        'pyflakes',
-        'debug_tools',
+        'pyflakes>=1.6.0',
         'rope>=0.10.5',
         'yapf',
         'pluggy'

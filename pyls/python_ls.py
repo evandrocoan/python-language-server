@@ -31,7 +31,7 @@ class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
         self.delegate = self.DELEGATE_CLASS(self.rfile, self.wfile)
 
     def handle(self):
-        self.delegate.handle()
+        self.delegate.start()
 
 
 def start_tcp_lang_server(bind_addr, port, handler_class):
@@ -162,8 +162,8 @@ class PythonLanguageServer(object):
         if rootUri is None:
             rootUri = uris.from_fs_path(rootPath) if rootPath is not None else ''
 
-        self.config = config.Config(rootUri, initializationOptions or {})
         self.workspace = Workspace(rootUri, self.rpc_manager)
+        self.config = config.Config(rootUri, initializationOptions or {})
         self._dispatchers = self._hook('pyls_dispatchers')
         self._hook('pyls_initialize')
 
