@@ -1,23 +1,22 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import debug_tools
 import socketserver
-import re
+import threading
+
+from jsonrpc.dispatchers import MethodDispatcher
+from jsonrpc.endpoint import Endpoint
+from jsonrpc.streams import JsonRpcStreamReader, JsonRpcStreamWriter
 
 from . import lsp, _utils, uris
 from .config import config
-from .json_rpc_server import JSONRPCServer
-from .rpc_manager import JSONRPCManager, MissingMethodException
 from .workspace import Workspace
 
 log = debug_tools.getLogger(__name__)
 
-_RE_FIRST_CAP = re.compile('(.)([A-Z][a-z]+)')
-_RE_ALL_CAP = re.compile('([a-z0-9])([A-Z])')
-
-_RE_FIRST_CAP = re.compile('(.)([A-Z][a-z]+)')
-_RE_ALL_CAP = re.compile('([a-z0-9])([A-Z])')
 
 LINT_DEBOUNCE_S = 0.5  # 500 ms
+PARENT_PROCESS_WATCH_INTERVAL = 10  # 10 s
+MAX_WORKERS = 64
 
 
 class _StreamHandlerWrapper(socketserver.StreamRequestHandler, object):
@@ -54,26 +53,31 @@ def start_tcp_lang_server(bind_addr, port, handler_class):
         server.server_close()
 
 
-def start_io_lang_server(rfile, wfile, handler_class):
+def start_io_lang_server(rfile, wfile, check_parent_process, handler_class):
     if not issubclass(handler_class, PythonLanguageServer):
         raise ValueError('Handler class must be an instance of PythonLanguageServer')
     log.info('Starting %s IO language server', handler_class.__name__)
-    server = handler_class(rfile, wfile)
+    server = handler_class(rfile, wfile, check_parent_process)
     server.start()
 
 
-class PythonLanguageServer(object):
+class PythonLanguageServer(MethodDispatcher):
     """ Implementation of the Microsoft VSCode Language Server Protocol
     https://github.com/Microsoft/language-server-protocol/blob/master/versions/protocol-1-x.md
     """
 
     # pylint: disable=too-many-public-methods,redefined-builtin
 
-    def __init__(self, rx, tx):
-        self.rpc_manager = JSONRPCManager(JSONRPCServer(rx, tx), self.handle_request)
+    def __init__(self, rx, tx, check_parent_process=False):
         self.workspace = None
         self.config = None
+
+        self._jsonrpc_stream_reader = JsonRpcStreamReader(rx)
+        self._jsonrpc_stream_writer = JsonRpcStreamWriter(tx)
+        self._check_parent_process = check_parent_process
+        self._endpoint = Endpoint(self, self._jsonrpc_stream_writer.write, max_workers=MAX_WORKERS)
         self._dispatchers = []
+        self._shutdown = False
 
     def __str__(self):
         representation = [
@@ -84,42 +88,36 @@ class PythonLanguageServer(object):
         return ", ".join(representation)
 
     def start(self):
-        """Entry point for the server"""
-        self.rpc_manager.start()
+        """Entry point for the server."""
+        self._jsonrpc_stream_reader.listen(self._endpoint.consume)
 
-    def handle_request(self, method, params):
-        """Provides callables to handle requests or responses to those reqeuests
+    def __getitem__(self, item):
+        """Override getitem to fallback through multiple dispatchers."""
+        if self._shutdown and item != 'exit':
+            # exit is the only allowed method during shutdown
+            log.debug("Ignoring non-exit method during shutdown: %s", item)
+            raise KeyError
 
-        Args:
-            method (str): name of the message
-            params (dict): body of the message
-
-        Returns:
-            Callable if method is to be handled
-
-        Raises:
-            KeyError: Handler for method is not found
-        """
-
-        method_call = 'm_{}'.format(_method_to_string(method))
-        if hasattr(self, method_call):
-            return getattr(self, method_call)(**params)
-        elif self._dispatchers:
+        try:
+            return super(PythonLanguageServer, self).__getitem__(item)
+        except KeyError:
+            # Fallback through extra dispatchers
             for dispatcher in self._dispatchers:
-                if method_call in dispatcher:
-                    return dispatcher[method_call](**params)
+                try:
+                    return dispatcher[item]
+                except KeyError:
+                    continue
 
-        raise MissingMethodException('No handler for for method {}'.format(method))
-
-    def m__cancel_request(self, **kwargs):
-        self.rpc_manager.cancel(kwargs['id'])
+        raise KeyError()
 
     def m_shutdown(self, **_kwargs):
-        self.rpc_manager.shutdown()
+        self._shutdown = True
         return None
 
     def m_exit(self, **_kwargs):
-        self.rpc_manager.exit()
+        self._endpoint.shutdown()
+        self._jsonrpc_stream_reader.close()
+        self._jsonrpc_stream_writer.close()
 
     def _hook(self, hook_name, doc_uri=None, **kwargs):
         """Calls hook_name and returns a list of results from all registered handlers"""
@@ -139,6 +137,7 @@ class PythonLanguageServer(object):
                 'triggerCharacters': ['.']
             },
             'documentFormattingProvider': True,
+            'documentHighlightProvider': True,
             'documentRangeFormattingProvider': True,
             'documentSymbolProvider': True,
             'definitionProvider': True,
@@ -162,13 +161,29 @@ class PythonLanguageServer(object):
         if rootUri is None:
             rootUri = uris.from_fs_path(rootPath) if rootPath is not None else ''
 
-        self.workspace = Workspace(rootUri, self.rpc_manager)
-        self.config = config.Config(rootUri, initializationOptions or {})
+        self.workspace = Workspace(rootUri, self._endpoint)
+        self.config = config.Config(rootUri, initializationOptions or {}, processId)
         self._dispatchers = self._hook('pyls_dispatchers')
         self._hook('pyls_initialize')
 
+        if self._check_parent_process and processId is not None:
+            def watch_parent_process(pid):
+                # exist when the given pid is not alive
+                if not _utils.is_process_alive(pid):
+                    log.info("parent process %s is not alive", pid)
+                    self.m_exit()
+                log.debug("parent process %s is still alive", pid)
+                threading.Timer(PARENT_PROCESS_WATCH_INTERVAL, watch_parent_process, args=[pid]).start()
+
+            watching_thread = threading.Thread(target=watch_parent_process, args=(processId,))
+            watching_thread.daemon = True
+            watching_thread.start()
+
         # Get our capabilities
         return {'capabilities': self.capabilities()}
+
+    def m_initialized(self, **_kwargs):
+        pass
 
     def code_actions(self, doc_uri, range, context):
         return flatten(self._hook('pyls_code_actions', doc_uri, range=range, context=context))
@@ -198,10 +213,13 @@ class PythonLanguageServer(object):
     def format_range(self, doc_uri, range):
         return self._hook('pyls_format_range', doc_uri, range=range)
 
+    def highlight(self, doc_uri, position):
+        return flatten(self._hook('pyls_document_highlight', doc_uri, position=position)) or None
+
     def hover(self, doc_uri, position):
         return self._hook('pyls_hover', doc_uri, position=position) or {'contents': ''}
 
-    @_utils.debounce(LINT_DEBOUNCE_S)
+    @_utils.debounce(LINT_DEBOUNCE_S, keyed_by='doc_uri')
     def lint(self, doc_uri):
         # Since we're debounced, the document may no longer be open
         if doc_uri in self.workspace.documents:
@@ -251,6 +269,9 @@ class PythonLanguageServer(object):
     def m_text_document__definition(self, textDocument=None, position=None, **_kwargs):
         return self.definitions(textDocument['uri'], position)
 
+    def m_text_document__document_highlight(self, textDocument=None, position=None, **_kwargs):
+        return self.highlight(textDocument['uri'], position)
+
     def m_text_document__hover(self, textDocument=None, position=None, **_kwargs):
         return self.hover(textDocument['uri'], position)
 
@@ -287,15 +308,6 @@ class PythonLanguageServer(object):
 
     def m_workspace__execute_command(self, command=None, arguments=None):
         return self.execute_command(command, arguments)
-
-
-def _method_to_string(method):
-    return _camel_to_underscore(method.replace("/", "__").replace("$", ""))
-
-
-def _camel_to_underscore(string):
-    s1 = _RE_FIRST_CAP.sub(r'\1_\2', string)
-    return _RE_ALL_CAP.sub(r'\1_\2', s1).lower()
 
 
 def flatten(list_of_lists):

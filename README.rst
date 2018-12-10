@@ -12,15 +12,35 @@ Python Language Server
 
 A Python 2.7 and 3.4+ implementation of the `Language Server Protocol`_.
 
-Feature Providers
------------------
-* Jedi_ for Completions, Definitions, Hover, References, Signature Help, and Symbols
+Installation
+------------
+
+The base language server requires Jedi_ to provide Completions, Definitions, Hover, References, Signature Help, and
+Symbols:
+
+``pip install python-language-server``
+
+If the respective dependencies are found, the following optional providers will be enabled:
+
 * Rope_ for Completions and renaming
 * Pyflakes_ linter to detect various errors
 * McCabe_ linter for complexity checking
 * pycodestyle_ linter for style checking
-* pydocstyle_ linter for docstring style checking
-* YAPF_ for code formatting
+* pydocstyle_ linter for docstring style checking (disabled by default)
+* autopep8_ for code formatting
+* YAPF_ for code formatting (preferred over autopep8)
+
+Optional providers can be installed using the `extras` syntax. To install YAPF_ formatting for example:
+
+``pip install 'python-language-server[yapf]'``
+
+All optional providers can be installed using:
+
+``pip install 'python-language-server[all]'``
+
+If you get an error similar to ``'install_requires' must be a string or list of strings`` then please upgrade setuptools before trying again. 
+
+``pip install -U setuptools``
 
 3rd Party Plugins
 ~~~~~~~~~~~~~~~~~
@@ -28,6 +48,10 @@ Installing these plugins will add extra functionality to the language server:
 
 * pyls-mypy_ Mypy type checking for Python 3
 * pyls-isort_ Isort import sort code formatting
+* pyls-black_ for code formatting using Black_
+
+Please see the above repositories for examples on how to write plugins for the Python Language Server. Please file an
+issue if you require assistance writing a plugin.
 
 Configuration
 -------------
@@ -42,6 +66,11 @@ order to respect flake8 configuration instead.
 
 Overall configuration is computed first from user configuration (in home directory), overridden by configuration
 passed in by the language client, and then overriden by configuration discovered in the workspace.
+
+To enable pydocstyle for linting docstrings add the following setting in your LSP configuration:
+```
+"pyls.plugins.pydocstyle.enabled": true
+```
 
 Language Server Features
 ------------------------
@@ -78,11 +107,6 @@ Document Formatting:
 
 .. image:: https://raw.githubusercontent.com/palantir/python-language-server/develop/resources/document-format.gif
 
-Installation
-------------
-
-``pip install python-language-server``
-
 Development
 -----------
 
@@ -109,7 +133,7 @@ The Python language server can be developed against a local instance of Visual S
 
     # Install the vscode-client extension
     cd vscode-client
-    yarn install .
+    yarn install
 
     # Run VSCode which is configured to use pyls
     # See the bottom of vscode-client/src/extension.ts for info
@@ -131,5 +155,8 @@ This project is made available under the MIT License.
 .. _pycodestyle: https://github.com/PyCQA/pycodestyle
 .. _pydocstyle: https://github.com/PyCQA/pydocstyle
 .. _YAPF: https://github.com/google/yapf
+.. _autopep8: https://github.com/hhatto/autopep8
 .. _pyls-mypy: https://github.com/tomv564/pyls-mypy
 .. _pyls-isort: https://github.com/paradoxxxzero/pyls-isort
+.. _pyls-black: https://github.com/rupert/pyls-black
+.. _Black: https://github.com/ambv/black

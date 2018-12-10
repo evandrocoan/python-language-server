@@ -1,11 +1,10 @@
 # Copyright 2017 Palantir Technologies, Inc.
 import debug_tools
+import pkg_resources
+
 import pluggy
 
 from pyls import _utils, hookspecs, uris, PYLS
-from .flake8_conf import Flake8Config
-from .pycodestyle_conf import PyCodeStyleConfig
-
 
 log = debug_tools.getLogger(__name__)
 
@@ -15,27 +14,48 @@ DEFAULT_CONFIG_SOURCES = ['pycodestyle']
 
 class Config(object):
 
-    def __init__(self, root_uri, init_opts):
+    def __init__(self, root_uri, init_opts, process_id):
         self._root_path = uris.to_fs_path(root_uri)
         self._root_uri = root_uri
         self._init_opts = init_opts
+        self._process_id = process_id
 
         self._settings = {}
         self._plugin_settings = {}
 
-        self._config_sources = {
-            'flake8': Flake8Config(self._root_path),
-            'pycodestyle': PyCodeStyleConfig(self._root_path)
-        }
+        self._config_sources = {}
+        try:
+            from .flake8_conf import Flake8Config
+            self._config_sources['flake8'] = Flake8Config(self._root_path)
+        except ImportError:
+            pass
+        try:
+            from .pycodestyle_conf import PyCodeStyleConfig
+            self._config_sources['pycodestyle'] = PyCodeStyleConfig(self._root_path)
+        except ImportError:
+            pass
 
         self._pm = pluggy.PluginManager(PYLS)
         self._pm.trace.root.setwriter(log.debug)
         self._pm.enable_tracing()
         self._pm.add_hookspecs(hookspecs)
+
+        # Pluggy will skip loading a plugin if it throws a DistributionNotFound exception.
+        # However I don't want all plugins to have to catch ImportError and re-throw. So here we'll filter
+        # out any entry points that throw ImportError assuming one or more of their dependencies isn't present.
+        for entry_point in pkg_resources.iter_entry_points(PYLS):
+            try:
+                entry_point.load()
+            except ImportError as e:
+                log.warn("Failed to load %s entry point '%s': %s", PYLS, entry_point.name, e)
+                self._pm.set_blocked(entry_point.name)
+
+        # Load the entry points into pluggy, having blocked any failing ones
         self._pm.load_setuptools_entrypoints(PYLS)
 
         for name, plugin in self._pm.list_name_plugin():
-            log.info("Loaded pyls plugin %s from %s", name, plugin)
+            if plugin is not None:
+                log.info("Loaded pyls plugin %s from %s", name, plugin)
 
         for plugin_conf in self._pm.hook.pyls_settings(config=self):
             self._plugin_settings = _utils.merge_dicts(self._plugin_settings, plugin_conf)
@@ -71,6 +91,10 @@ class Config(object):
     def root_uri(self):
         return self._root_uri
 
+    @property
+    def process_id(self):
+        return self._process_id
+
     def settings(self, document_path=None):
         """Settings are constructed from a few sources:
 
@@ -85,7 +109,9 @@ class Config(object):
         sources = self._settings.get('configurationSources', DEFAULT_CONFIG_SOURCES)
 
         for source_name in reversed(sources):
-            source = self._config_sources[source_name]
+            source = self._config_sources.get(source_name)
+            if not source:
+                continue
             source_conf = source.user_config()
             # log.debug("Got user config from %s: %s", source.__class__.__name__, source_conf)
             settings = _utils.merge_dicts(settings, source_conf)
@@ -98,7 +124,9 @@ class Config(object):
         # log.debug("With lsp configuration: %s", settings)
 
         for source_name in reversed(sources):
-            source = self._config_sources[source_name]
+            source = self._config_sources.get(source_name)
+            if not source:
+                continue
             source_conf = source.project_config(document_path or self._root_path)
             # log.debug("Got project config from %s: %s", source.__class__.__name__, source_conf)
             settings = _utils.merge_dicts(settings, source_conf)
